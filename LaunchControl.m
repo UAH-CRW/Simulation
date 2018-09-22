@@ -49,28 +49,6 @@ for i = 1:height(propoptions)
     end
 end
 
-prop_params.ox.V = param_from_table(propoptions, 'Oxidizer volume', 1);
-
-prop_params.ox.V_ullage_initial = param_from_table(propoptions, 'Oxidizer ullage volume', 1);
-
-prop_params.ox.m = param_from_table(propoptions, 'Ox Mass', 1);
-
-prop_params.ox.Cv_valves = param_from_table(propoptions, 'Oxidizer Valve Cv', 1);
-
-prop_params.ox.T = param_from_table(propoptions, 'Oxidizer temperature', 1);
-
-prop_params.f.V = param_from_table(propoptions, 'Fuel volume', 1);
-
-prop_params.f.V_ullage_initial = param_from_table(propoptions, 'Fuel ullage volume', 1);
-
-prop_params.f.m = param_from_table(propoptions, 'Fuel Mass', 1);
-
-prop_params.f.Cv_valves = param_from_table(propoptions, 'Fuel Valve Cv', 1);
-
-prop_params.f.T = param_from_table(propoptions, 'Fuel temperature', 1);
-
-prop_params.f.filmcooling_divert = param_from_table(propoptions, 'Fuel Diverted to Film Cooling', 1);
-
 %% Rocket Options
 rocket_params = [];
 rocketoptions = readtable('simconfig.xlsx', 'Sheet', 'Rocket Parameters (Mass)');
@@ -84,51 +62,14 @@ rocket_params.d = param_from_table(rocketoptions, 'Largest circular diameter', 1
 engine_params = [];
 engineoptions = readtable('simconfig.xlsx', 'Sheet', 'Engine Parameters');
 
-engine_params.eps = param_from_table(engineoptions, 'Expansion ratio', 1);
 
-engine_params.cstar_eta = param_from_table(engineoptions, 'C* efficiency', 1);
-
-engine_params.m = param_from_table(engineoptions, 'Engine mass', 1);
-
-engine_params.epsc = param_from_table(engineoptions, 'Contraction ratio', 1);
-
-engine_params.Lstar = param_from_table(engineoptions, 'Characteristic length', 1);
-
-%engine_params.MR = param_from_table(engineoptions, 'Mixture ratio', 1);
-
-engine_params.thetac = param_from_table(engineoptions, 'Chamber-to-throat contraction angle', 1);
-
-engine_params.At = param_from_table(engineoptions, 'Engine throat area', 1);
-
-engine_params.alpn = param_from_table(engineoptions, 'Nozzle cone half angle', 1);
-
-engine_params.injector_f_Atotal = param_from_table(engineoptions, 'Fuel Injector Area', 1);
-
-engine_params.injector_ox_Atotal = param_from_table(engineoptions, 'Oxidizer Injector Area', 1);
-
-engine_params.injector_f_Cd = param_from_table(engineoptions, 'Fuel Injector Cd', 1);
-
-engine_params.injector_ox_Cd = param_from_table(engineoptions, 'Oxidizer Injector Cd', 1);
-
-engine_params.ignition_time = param_from_table(engineoptions, 'Ignition Time', 1);
-
-%% Avionics Options
-avionics_params = [];
-avionicsoptions = readtable('simconfig.xlsx', 'Sheet', 'Avionics Parameters');
-avionics_params.freq = param_from_table(avionicsoptions, 'Frequency', 1);
-
-avionics_params.gs_distance = param_from_table(avionicsoptions, 'Ground Station Distance', 1);
-
-avionics_params.tx_power = param_from_table(avionicsoptions, 'Transmit Power', 1);
-
-avionics_params.rx_sens = param_from_table(avionicsoptions, 'Receive Sensitivity', 1);
 
 %% Mode Detection
 
 % 1 is single
 % 2 is monte carlo
 % 3 is range
-mode = detect_value_types(atm_conditions, prop_params, engine_params, rocket_params, avionics_params);
+mode = detect_value_types(atm_conditions, prop_params, engine_params, rocket_params);
 
 %% Simulation Execution
 results = [];
@@ -136,7 +77,7 @@ results = [];
 
 startup % run startup script for CEA and Coolprop
 if (mode == 1)
-    [keyinfo, flightdata, forces, propinfo, avionics_data, Roc, Eng, Prop] = runsim(atm_conditions, prop_params, engine_params, rocket_params, avionics_params);
+    [keyinfo, flightdata, forces, propinfo, INS_data, Roc, Eng, Prop] = runsim(atm_conditions, prop_params, engine_params, rocket_params);
 elseif (mode == 2)
     
     fieldrecord = cell([monte_carlo_iterations, 1]);
@@ -168,9 +109,9 @@ elseif (mode == 2)
         fprintf('\nApproximate Time Elapsed: %4.0f : %02.0f : %02.0f', floor(sum(exec_times) / (60.0 * 60.0)), floor(mod(sum(exec_times) / 60.0,60)), floor(mod(sum(exec_times),60)));
         fprintf('\nExtrapolated Finish Time: %4.0f : %02.0f : %02.0f', finish_hr, finish_min, finish_s);
         
-        [this_run_atm_conditions, this_run_prop_params, this_run_engine_params, this_run_rocket_params, this_run_avionics_params, varied_fields] = generate_monte_carlo_parameters(atm_conditions, prop_params, engine_params, rocket_params, avionics_params);
+        [this_run_atm_conditions, this_run_prop_params, this_run_engine_params, this_run_rocket_params, varied_fields] = generate_monte_carlo_parameters(atm_conditions, prop_params, engine_params, rocket_params);
         
-        [keyinfo, flightdata, forces, propinfo, avionics_data, Roc, Eng, Prop, exec_time] = runsim(this_run_atm_conditions, this_run_prop_params, this_run_engine_params, this_run_rocket_params, this_run_avionics_params);
+        [keyinfo, flightdata, forces, propinfo, INS_data, Roc, Eng, Prop, exec_time] = runsim(this_run_atm_conditions, this_run_prop_params, this_run_engine_params, this_run_rocket_params);
         
         exec_times(runNum) = exec_time * 1.125; % Multiply by 1.125 so the time estimate is conservative and we don't end up trying to make a graph out of the data in 7 minutes before a poster is due when we thought we'd have an hour
         
@@ -182,7 +123,7 @@ elseif (mode == 2)
         data.Eng = Eng;
         data.Prop = Prop;
         data.propinfo = propinfo;
-        data.avionics_data = avionics_data;
+        data.INS_data = INS_data;
         fullsims{runNum} = data;
         results(runNum,:) = [keyinfo.alt, keyinfo.mach, keyinfo.accel, keyinfo.Q, keyinfo.load, keyinfo.thrust, this_run_rocket_params.minert, (Prop.m)/(Prop.m+this_run_rocket_params.minert)];
     end
@@ -190,7 +131,7 @@ elseif (mode == 3)
     % Return [2, 5, 10] if the first parameter has 2 values, the next
     % has 5, and the 3rd has 10. Preserving order is obviously rather
     % important here
-    dimensions = get_sim_dimensions(atm_conditions, prop_params, engine_params, rocket_params, avionics_params);
+    dimensions = get_sim_dimensions(atm_conditions, prop_params, engine_params, rocket_params);
     dimensions = dimensions + 1;
     
     fprintf('\nDimension Sizes:');
@@ -246,9 +187,9 @@ elseif (mode == 3)
         fprintf('\nApproximate Time Elapsed: %4.0f : %02.0f : %02.0f', floor(sum(exec_times) / (60.0 * 60.0)), floor(mod(sum(exec_times) / 60.0,60)), floor(mod(sum(exec_times),60)));
         fprintf('\nExtrapolated Finish Time: %4.0f : %02.0f : %02.0f', finish_hr, finish_min, finish_s);
         
-        [this_run_atm_conditions, this_run_prop_params, this_run_engine_params, this_run_rocket_params, this_run_avionics_params, varied_fields] = generate_range_of_values_parameters(atm_conditions, prop_params, engine_params, rocket_params, avionics_params, input_coefficients);
+        [this_run_atm_conditions, this_run_prop_params, this_run_engine_params, this_run_rocket_params, varied_fields] = generate_range_of_values_parameters(atm_conditions, prop_params, engine_params, rocket_params, input_coefficients);
         
-        [keyinfo, flightdata, forces, propinfo, avionics_data, Roc, Eng, Prop, exec_time] = runsim(this_run_atm_conditions, this_run_prop_params, this_run_engine_params, this_run_rocket_params, this_run_avionics_params);
+        [keyinfo, flightdata, forces, propinfo, INS_data, Roc, Eng, Prop, exec_time] = runsim(this_run_atm_conditions, this_run_prop_params, this_run_engine_params, this_run_rocket_params);
         
         exec_times(i) = exec_time * 1.125;
         
@@ -260,7 +201,7 @@ elseif (mode == 3)
         data.Eng = Eng;
         data.Prop = Prop;
         data.propinfo = propinfo;
-        data.avionics_data = avionics_data;
+        data.INS_data = INS_data;
         fullsims{i} = data;
         results(i,:) = [keyinfo.alt, keyinfo.mach, keyinfo.accel, keyinfo.Q, keyinfo.load, keyinfo.thrust, this_run_rocket_params.minert, (Prop.m)/(Prop.m+this_run_rocket_params.minert)];
         
@@ -298,7 +239,7 @@ if (mode == 1)
     
     % https://stackoverflow.com/questions/7636567/write-information-into-excel-after-each-loop
     WB.Sheets.Item(WS.Count).Activate();
-    sim_output_gen(Excel, flightdata, forces, propinfo, avionics_data, keyinfo, Prop, Eng, Roc);
+    sim_output_gen(Excel, flightdata, forces, propinfo, INS_data, keyinfo, Prop, Eng, Roc);
     
 elseif (mode == 2 || mode == 3)
     if(mode == 2)
@@ -363,18 +304,16 @@ elseif (mode == 2 || mode == 3)
     % https://www.mathworks.com/matlabcentral/answers/89845-how-do-i-create-a-vector-of-the-average-of-consecutive-elements-of-another-vector-without-using-a-l#answer_99279
     excel_bins = mean([bins(1:end-1); bins(2:end)])';
     
-    %Don't know what this part does but it broke so I disabled it. Hope it
-    %wasn't important
-%     Excel.Range(sprintf('%s%i:%s%i', alphabetnumbers(num_varied_parameters ...
-%        + length(output_headers) + 5), tablestart + 1, ...
-%        alphabetnumbers(num_varied_parameters + length(output_headers) + 5),...
-%        tablestart + length(bins) - 1)).Select();
-%     Excel.Selection.Value = excel_bins;
-%     Excel.Range(sprintf('%s%i:%s%i', alphabetnumbers(num_varied_parameters ...
-%        + length(output_headers) + 6), tablestart + 1, ...
-%        alphabetnumbers(num_varied_parameters + length(output_headers) + 6),...
-%        tablestart + length(bins) - 1)).Select();
-%     Excel.Selection.Value = counts;
+    Excel.Range(sprintf('%s%i:%s%i', alphabetnumbers(num_varied_parameters ...
+        + length(output_headers) + 5), tablestart + 1, ...
+        alphabetnumbers(num_varied_parameters + length(output_headers) + 5),...
+        tablestart + length(bins) - 1)).Select();
+    Excel.Selection.Value = excel_bins;
+    Excel.Range(sprintf('%s%i:%s%i', alphabetnumbers(num_varied_parameters ...
+        + length(output_headers) + 6), tablestart + 1, ...
+        alphabetnumbers(num_varied_parameters + length(output_headers) + 6),...
+        tablestart + length(bins) - 1)).Select();
+    Excel.Selection.Value = counts;
     
     for i = 1:iteration_count
         WS.Add([], WS.Item(WS.Count));
@@ -383,7 +322,7 @@ elseif (mode == 2 || mode == 3)
         this_sim = fullsims(i);
         this_sim = this_sim{:};
         sim_output_gen(Excel, this_sim.flightdata, this_sim.forces,...
-            this_sim.propinfo, this_sim.avionics_data, this_sim.keyinfo,...
+            this_sim.propinfo, this_sim.INS_data, this_sim.keyinfo,...
             this_sim.Prop, this_sim.Eng, this_sim.Roc);
     end
     
