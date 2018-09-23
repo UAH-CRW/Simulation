@@ -19,37 +19,11 @@ for i = 1:numel(fields)
     end
 end
 
-fields = fieldnames(prop_params);
-for i = 1:numel(fields)
-    
-    fields2 = fieldnames(prop_params.(fields{i}));
-    
-    for j = 1:numel(fields2)
-        
-        if(strcmp(fields2{j},'name'))
-            this_run_prop_params.(fields{i}).(fields2{j}) = prop_params.(fields{i}).(fields2{j});
-        else
-            if (length(prop_params.(fields{i}).(fields2{j})) == 3)
-                param = prop_params.(fields{i}).(fields2{j});
-                dim = [dim (param(3) - param(1))/param(2)];
-            end
-        end
-    end
-end
-
 
 fields = fieldnames(rocket_params);
 for i = 1:numel(fields)
     if ( length(rocket_params.(fields{i})) == 3)
         param = rocket_params.(fields{i});
-        dim = [dim (param(3) - param(1))/param(2)];
-    end
-end
-
-fields = fieldnames(avionics_params);
-for i = 1:numel(fields)
-    if ( length(avionics_params.(fields{i})) == 3)
-        param = avionics_params.(fields{i});
         dim = [dim (param(3) - param(1))/param(2)];
     end
 end

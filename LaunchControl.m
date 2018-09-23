@@ -37,17 +37,7 @@ prop_params = [];
 % prop_params.ox.garbage = 0;
 % prop_params.f.garbage = 0;
 propoptions = readtable('simconfig.xlsx', 'Sheet', 'Propellant Parameters (Tanks)');
-for i = 1:height(propoptions)
-    if strcmp(table2cell(propoptions(i, 1)), 'Oxidizer')
-        name = table2cell(propoptions(i, 2));
-        formula = table2cell(propoptions(i, 3));
-        prop_params.ox.name = {name{1}, formula{1}};
-    elseif strcmp(table2cell(propoptions(i, 1)), 'Fuel')
-        name = table2cell(propoptions(i, 2));
-        formula = table2cell(propoptions(i, 3));
-        prop_params.f.name = {name{1}, formula{1}};
-    end
-end
+
 
 %% Rocket Options
 rocket_params = [];
@@ -62,14 +52,19 @@ rocket_params.d = param_from_table(rocketoptions, 'Largest circular diameter', 1
 engine_params = [];
 engineoptions = readtable('simconfig.xlsx', 'Sheet', 'Engine Parameters');
 
-
+for i = 1:height(engineoptions)
+    if strcmp(table2cell(engineoptions(i, 1)), 'Motor')
+        name = table2cell(engineoptions(i, 2));
+        engine_params.name = name{1};
+    end
+end
 
 %% Mode Detection
 
 % 1 is single
 % 2 is monte carlo
 % 3 is range
-mode = detect_value_types(atm_conditions, prop_params, engine_params, rocket_params);
+mode = detect_value_types(atm_conditions, engine_params, rocket_params);
 
 %% Simulation Execution
 results = [];
@@ -77,7 +72,7 @@ results = [];
 
 startup % run startup script for CEA and Coolprop
 if (mode == 1)
-    [keyinfo, flightdata, forces, propinfo, INS_data, Roc, Eng, Prop] = runsim(atm_conditions, prop_params, engine_params, rocket_params);
+    [keyinfo, flightdata, forces, Roc, Eng, Prop] = runsim(atm_conditions, prop_params, engine_params, rocket_params);
 elseif (mode == 2)
     
     fieldrecord = cell([monte_carlo_iterations, 1]);
@@ -111,7 +106,7 @@ elseif (mode == 2)
         
         [this_run_atm_conditions, this_run_prop_params, this_run_engine_params, this_run_rocket_params, varied_fields] = generate_monte_carlo_parameters(atm_conditions, prop_params, engine_params, rocket_params);
         
-        [keyinfo, flightdata, forces, propinfo, INS_data, Roc, Eng, Prop, exec_time] = runsim(this_run_atm_conditions, this_run_prop_params, this_run_engine_params, this_run_rocket_params);
+        [keyinfo, flightdata, forces, Roc, Eng, Prop, exec_time] = runsim(this_run_atm_conditions, this_run_prop_params, this_run_engine_params, this_run_rocket_params);
         
         exec_times(runNum) = exec_time * 1.125; % Multiply by 1.125 so the time estimate is conservative and we don't end up trying to make a graph out of the data in 7 minutes before a poster is due when we thought we'd have an hour
         
@@ -122,10 +117,9 @@ elseif (mode == 2)
         data.Roc = Roc;
         data.Eng = Eng;
         data.Prop = Prop;
-        data.propinfo = propinfo;
-        data.INS_data = INS_data;
         fullsims{runNum} = data;
-        results(runNum,:) = [keyinfo.alt, keyinfo.mach, keyinfo.accel, keyinfo.Q, keyinfo.load, keyinfo.thrust, this_run_rocket_params.minert, (Prop.m)/(Prop.m+this_run_rocket_params.minert)];
+        %FIXME: currently defaulting to mass fraction of 0
+        results(runNum,:) = [keyinfo.alt, keyinfo.mach, keyinfo.accel, keyinfo.Q, keyinfo.load, keyinfo.thrust, this_run_rocket_params.minert, 0 / (0 + this_run_rocket_params.minert)];
     end
 elseif (mode == 3)
     % Return [2, 5, 10] if the first parameter has 2 values, the next
@@ -239,7 +233,7 @@ if (mode == 1)
     
     % https://stackoverflow.com/questions/7636567/write-information-into-excel-after-each-loop
     WB.Sheets.Item(WS.Count).Activate();
-    sim_output_gen(Excel, flightdata, forces, propinfo, INS_data, keyinfo, Prop, Eng, Roc);
+    sim_output_gen(Excel, flightdata, forces, keyinfo, Prop, Eng, Roc);
     
 elseif (mode == 2 || mode == 3)
     if(mode == 2)
@@ -322,8 +316,7 @@ elseif (mode == 2 || mode == 3)
         this_sim = fullsims(i);
         this_sim = this_sim{:};
         sim_output_gen(Excel, this_sim.flightdata, this_sim.forces,...
-            this_sim.propinfo, this_sim.INS_data, this_sim.keyinfo,...
-            this_sim.Prop, this_sim.Eng, this_sim.Roc);
+            this_sim.keyinfo, this_sim.Eng, this_sim.Roc);
     end
     
     results = sortrows(results);

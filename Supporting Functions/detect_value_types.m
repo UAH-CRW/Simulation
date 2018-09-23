@@ -1,4 +1,4 @@
-function mode = detect_value_types(atm_conditions, prop_params, engine_params, rocket_params, avionics_params)
+function mode = detect_value_types(atm_conditions, engine_params, rocket_params)
 %DETECT_VALUE_TYPES Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -27,32 +27,8 @@ for i = 1:numel(fields)
     
     if ( mode ~= 1 && length(engine_params.(fields{i})) ~= 1 && mode ~= length(engine_params.(fields{i})) )
         error('You cannot have Monte Carlo and Range in the same sim run');
-    elseif ( mode == 1 )
+    elseif (mode == 1 && ~ischar(engine_params.(fields{i})))
         mode = length(engine_params.(fields{i}));
-    end
-end
-
-fields = fieldnames(prop_params);
-for i = 1:numel(fields)
-    
-    fields2 = fieldnames(prop_params.(fields{i}));
-    
-    for j = 1:numel(fields2)
-        if( strcmp(fields2{j},'name'))
-            %Don't ask why this has to be done this way, I don't know but
-            %it doesn't work otherwise
-        else
-            if(length(prop_params.(fields{i}).(fields2{j})) == 0)
-                error('The value for the field "%s.%s" in prop paremeters is empty. Check if the parameter name is in the first column in Excel\nAKA Someone broke the Excel file', fields{i},fields2{j});
-            end
-            
-            if ( mode ~= 1 && length(prop_params.(fields{i}).(fields2{j})) ~= 1 && mode ~= length(prop_params.(fields{i}).(fields2{j})) )
-                error('You cannot have Monte Carlo and Range in the same sim run');
-            elseif ( mode == 1 )
-                mode = length(prop_params.(fields{i}).(fields2{j}));
-            end
-        end
-        
     end
 end
 
@@ -67,20 +43,6 @@ for i = 1:numel(fields)
         error('You cannot have Monte Carlo and Range in the same sim run');
     elseif ( mode == 1 )
         mode = length(rocket_params.(fields{i}));
-    end
-end
-
-fields = fieldnames(avionics_params);
-for i = 1:numel(fields)
-    
-    if(length(avionics_params.(fields{i})) == 0)
-        error('The value for the field "%s" in avionics paremeters is empty. Check if the parameter name is in the first column in Excel\nAKA Someone broke the Excel file', fields{i});
-    end
-    
-    if ( mode ~= 1 && length(avionics_params.(fields{i})) ~= 1 & mode ~= length(avionics_params.(fields{i})) )
-        error('You cannot have Monte Carlo and Range in the same sim run');
-    elseif ( mode == 1 )
-        mode = length(avionics_params.(fields{i}));
     end
 end
 

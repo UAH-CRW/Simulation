@@ -1,4 +1,4 @@
-function [max_vals, flightdata, forces, propinfo, INS_data, Roc, Eng, Prop, exec_time] = runsim(Conditions, Prop, Eng, Roc)
+function [max_vals, flightdata, forces, Roc, Eng, Prop, exec_time] = runsim(Conditions, Prop, Eng, Roc)
 %RUNSIM Summary of this function goes here
 %   Tamb:               ambient temperature (K)
 %   Pamb:               ambient pressure (Pa)
@@ -63,7 +63,6 @@ tic % Record sim computation time
     Flight.max.impulse = max(flightdata(:, 6)); % [N*s]
     Flight.max.Isp = Flight.max.impulse / ((max(forces(:, 1)) - min(forces(:, 1))) * g);
     temp = find(~flightdata(5:end, 3));
-    Flight.max.burnout_predicted_apogee = INS_data(115, 5)*m2f;
     max_vals = Flight.max;
 
 exec_time = toc;
