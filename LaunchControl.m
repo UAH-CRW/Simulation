@@ -14,7 +14,7 @@ startup % run startup script for CEA and Coolprop
 
 %% Simulation Conditions
 atm_conditions = [];
-atmoptions = readtable('simconfig.xlsm', 'Sheet', 'Simulation Conditions (Weather)');
+atmoptions = readtable('simconfig.xlsm', 'Sheet', 'Simulation Conditions');
 
 atm_conditions.pamb = param_from_table(atmoptions, 'Ambient pressure', 1);
 
@@ -32,29 +32,17 @@ atm_conditions.sensors_accel_noise = param_from_table(atmoptions, 'Accelerometer
 
 atm_conditions.sensors_pressure_total_stddev = param_from_table(atmoptions, 'Total pressure sensor stddev', 1);
 
-%% Propellant Options
-prop_params = [];
-% prop_params.ox.garbage = 0;
-% prop_params.f.garbage = 0;
-propoptions = readtable('simconfig.xlsm', 'Sheet', 'Propellant Parameters (Tanks)');
-
-
 %% Rocket Options
 rocket_params = [];
-rocketoptions = readtable('simconfig.xlsm', 'Sheet', 'Rocket Parameters (Mass)');
+engine_params = [];
+rocketoptions = readtable('simconfig.xlsm', 'Sheet', 'Vehicle');
 rocket_params.minert = param_from_table(rocketoptions, 'Total inert mass', 1);
 
 rocket_params.d = param_from_table(rocketoptions, 'Largest circular diameter', 1);
 
-%rocket_params.TW = param_from_table(rocketoptions, 'Thrust-to-weight ratio', 1);
-
-%% Engine Options
-engine_params = [];
-engineoptions = readtable('simconfig.xlsm', 'Sheet', 'Engine Parameters');
-
-for i = 1:height(engineoptions)
-    if strcmp(table2cell(engineoptions(i, 1)), 'Motor')
-        name = table2cell(engineoptions(i, 2));
+for i = 1:height(rocketoptions)
+    if strcmp(table2cell(rocketoptions(i, 1)), 'Motor')
+        name = table2cell(rocketoptions(i, 2));
         engine_params.name = name{1};
     end
 end
