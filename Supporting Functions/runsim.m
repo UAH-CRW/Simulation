@@ -43,8 +43,9 @@ Roc.Mprop = Eng.thrustcurve.mprop / Roc.mwet; % Propellant mass ratio
 Roc.A = pi * Roc.d^2 / 4;
 
 % For convenience with parachutes
-Recovery.mainCdA = Recovery.mainCd * recovery.mainarea;
-Recovery.drogueCdA = Recovery.drogueCd * recovery.droguearea;
+Recovery.mainCdA = Recovery.mainCd * Recovery.mainarea;
+Recovery.drogueCdA = Recovery.drogueCd * Recovery.droguearea;
+Recovery.apogeetime = 0;
 
 %% Simulation Section
 options = simset('SrcWorkspace','current');
