@@ -39,7 +39,7 @@ for i = 1:numel(fields)
         error('The value for the field "%s" in engine paremeters is empty. Check if the parameter name is in the first column in Excel\nAKA Someone broke the Excel file', fields{i});
     end
     
-    if ( mode ~= 1 && length(engine_params.(fields{i})) ~= 1 && mode ~= length(engine_params.(fields{i})) )
+    if (mode ~= 1 && length(engine_params.(fields{i})) ~= 1 && mode ~= length(engine_params.(fields{i})) && ~ischar(engine_params.(fields{i})))
         error('You cannot have Monte Carlo and Range in the same sim run');
     elseif (mode == 1 && ~ischar(engine_params.(fields{i})))
         mode = length(engine_params.(fields{i}));

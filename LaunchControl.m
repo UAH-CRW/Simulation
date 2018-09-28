@@ -101,9 +101,9 @@ elseif (mode == 2)
         fprintf('\nApproximate Time Elapsed: %4.0f : %02.0f : %02.0f', floor(sum(exec_times) / (60.0 * 60.0)), floor(mod(sum(exec_times) / 60.0,60)), floor(mod(sum(exec_times),60)));
         fprintf('\nExtrapolated Finish Time: %4.0f : %02.0f : %02.0f', finish_hr, finish_min, finish_s);
         
-        [this_run_atm_conditions, this_run_engine_params, this_run_rocket_params, varied_fields] = generate_monte_carlo_parameters(atm_conditions, engine_params, rocket_params, recovery_params);
+        [this_run_atm_conditions, this_run_engine_params, this_run_rocket_params, this_run_recovery_params, varied_fields] = generate_monte_carlo_parameters(atm_conditions, engine_params, rocket_params, recovery_params);
         
-        [keyinfo, flightdata, forces, Roc, Eng, exec_time] = runsim(this_run_atm_conditions, this_run_engine_params, this_run_rocket_params, recovery_params);
+        [keyinfo, flightdata, forces, Roc, Eng, exec_time] = runsim(this_run_atm_conditions, this_run_engine_params, this_run_rocket_params, this_run_recovery_params);
         
         exec_times(runNum) = exec_time * 1.125; % Multiply by 1.125 so the time estimate is conservative and we don't end up trying to make a graph out of the data in 7 minutes before a poster is due when we thought we'd have an hour
         
