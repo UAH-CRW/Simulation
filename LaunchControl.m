@@ -28,6 +28,8 @@ atm_conditions.rail_length = param_from_table(atmoptions, 'Rail length (effectiv
 
 atm_conditions.launch_angle = deg2rad(param_from_table(atmoptions, 'Launch angle', 1));
 
+atm_conditions.windspeed = param_from_table(atmoptions, 'Windspeed', 1);
+
 %% Rocket Options
 rocket_params = [];
 engine_params = [];
