@@ -1,4 +1,4 @@
-function mode = detect_value_types(atm_conditions, engine_params, rocket_params)
+function mode = detect_value_types(atm_conditions, engine_params, rocket_params, recovery_params)
 %DETECT_VALUE_TYPES Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -15,6 +15,20 @@ for i = 1:numel(fields)
         error('You cannot have Monte Carlo and Range in the same sim run');
     elseif ( mode == 1 )
         mode = length(atm_conditions.(fields{i}));
+    end
+end
+
+fields = fieldnames(recovery_params);
+for i = 1:numel(fields)
+    
+    if(length(recovery_params.(fields{i})) == 0)
+        error('The value for the field "%s" in recovery options is empty. Check if the parameter name is in the first column in Excel\nAKA Someone broke the Excel file', fields{i});
+    end
+    
+    if ( mode ~= 1 && length(recovery_params.(fields{i})) ~= 1 && mode ~= length(recovery_params.(fields{i})) )
+        error('You cannot have Monte Carlo and Range in the same sim run');
+    elseif ( mode == 1 )
+        mode = length(recovery_params.(fields{i}));
     end
 end
 

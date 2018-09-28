@@ -1,4 +1,4 @@
-function [max_vals, flightdata, forces, Roc, Eng, Prop, exec_time] = runsim(Conditions, Prop, Eng, Roc)
+function [max_vals, flightdata, forces, Roc, Eng, exec_time] = runsim(Conditions, Eng, Roc, Recovery)
 %RUNSIM Summary of this function goes here
 %   Tamb:               ambient temperature (K)
 %   Pamb:               ambient pressure (Pa)
@@ -41,6 +41,10 @@ Roc.mwet = Eng.thrustcurve.minitial + Roc.minert; % Wet mass of rocket [kg]
 Roc.Mprop = Eng.thrustcurve.mprop / Roc.mwet; % Propellant mass ratio
 
 Roc.A = pi * Roc.d^2 / 4;
+
+% For convenience with parachutes
+Recovery.mainCdA = Recovery.mainCd * recovery.mainarea;
+Recovery.drogueCdA = Recovery.drogueCd * recovery.droguearea;
 
 %% Simulation Section
 options = simset('SrcWorkspace','current');

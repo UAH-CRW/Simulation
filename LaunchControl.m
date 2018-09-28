@@ -28,10 +28,6 @@ atm_conditions.rail_length = param_from_table(atmoptions, 'Rail length (effectiv
 
 atm_conditions.launch_angle = deg2rad(param_from_table(atmoptions, 'Launch angle', 1));
 
-atm_conditions.sensors_accel_noise = param_from_table(atmoptions, 'Accelerometer stddev', 1);
-
-atm_conditions.sensors_pressure_total_stddev = param_from_table(atmoptions, 'Total pressure sensor stddev', 1);
-
 %% Rocket Options
 rocket_params = [];
 engine_params = [];
@@ -47,12 +43,23 @@ for i = 1:height(rocketoptions)
     end
 end
 
+%% Recovery system options
+recovery_params = [];
+recoveryoptions = readtable('simconfig.xlsm', 'Sheet', 'Recovery');
+
+recovery_params.droguedeployoffset = param_from_table(recoveryoptions, 'Drogue deployment time', 1);
+recovery_params.maindeployaltitude = param_from_table(recoveryoptions, 'Main deployment altitude', 1);
+recovery_params.mainCd = param_from_table(recoveryoptions, 'Main chute Cd', 1);
+recovery_params.drogueCd = param_from_table(recoveryoptions, 'Drogue chute Cd', 1);
+recovery_params.mainarea = param_from_table(recoveryoptions, 'Main chute area', 1);
+recovery_params.droguearea = param_from_table(recoveryoptions, 'Drogue chute area', 1);
+
 %% Mode Detection
 
 % 1 is single
 % 2 is monte carlo
 % 3 is range
-mode = detect_value_types(atm_conditions, engine_params, rocket_params);
+mode = detect_value_types(atm_conditions, engine_params, rocket_params, recovery_params);
 
 %% Simulation Execution
 results = [];
@@ -60,7 +67,7 @@ results = [];
 
 startup % run startup script for CEA and Coolprop
 if (mode == 1)
-    [keyinfo, flightdata, forces, Roc, Eng, Prop] = runsim(atm_conditions, prop_params, engine_params, rocket_params);
+    [keyinfo, flightdata, forces, Roc, Eng] = runsim(atm_conditions, engine_params, rocket_params, recovery_params);
 elseif (mode == 2)
     
     fieldrecord = cell([monte_carlo_iterations, 1]);
@@ -92,9 +99,9 @@ elseif (mode == 2)
         fprintf('\nApproximate Time Elapsed: %4.0f : %02.0f : %02.0f', floor(sum(exec_times) / (60.0 * 60.0)), floor(mod(sum(exec_times) / 60.0,60)), floor(mod(sum(exec_times),60)));
         fprintf('\nExtrapolated Finish Time: %4.0f : %02.0f : %02.0f', finish_hr, finish_min, finish_s);
         
-        [this_run_atm_conditions, this_run_prop_params, this_run_engine_params, this_run_rocket_params, varied_fields] = generate_monte_carlo_parameters(atm_conditions, prop_params, engine_params, rocket_params);
+        [this_run_atm_conditions, this_run_engine_params, this_run_rocket_params, varied_fields] = generate_monte_carlo_parameters(atm_conditions, engine_params, rocket_params, recovery_params);
         
-        [keyinfo, flightdata, forces, Roc, Eng, Prop, exec_time] = runsim(this_run_atm_conditions, this_run_prop_params, this_run_engine_params, this_run_rocket_params);
+        [keyinfo, flightdata, forces, Roc, Eng, exec_time] = runsim(this_run_atm_conditions, this_run_engine_params, this_run_rocket_params, recovery_params);
         
         exec_times(runNum) = exec_time * 1.125; % Multiply by 1.125 so the time estimate is conservative and we don't end up trying to make a graph out of the data in 7 minutes before a poster is due when we thought we'd have an hour
         
@@ -104,7 +111,6 @@ elseif (mode == 2)
         data.forces = forces;
         data.Roc = Roc;
         data.Eng = Eng;
-        data.Prop = Prop;
         fullsims{runNum} = data;
         %FIXME: currently defaulting to mass fraction of 0
         results(runNum,:) = [keyinfo.alt, keyinfo.mach, keyinfo.accel, keyinfo.Q, keyinfo.load, keyinfo.thrust, this_run_rocket_params.minert, 0 / (0 + this_run_rocket_params.minert)];
@@ -113,7 +119,7 @@ elseif (mode == 3)
     % Return [2, 5, 10] if the first parameter has 2 values, the next
     % has 5, and the 3rd has 10. Preserving order is obviously rather
     % important here
-    dimensions = get_sim_dimensions(atm_conditions, prop_params, engine_params, rocket_params);
+    dimensions = get_sim_dimensions(atm_conditions, engine_params, rocket_params, recovery_params);
     dimensions = dimensions + 1;
     
     fprintf('\nDimension Sizes:');
@@ -169,9 +175,9 @@ elseif (mode == 3)
         fprintf('\nApproximate Time Elapsed: %4.0f : %02.0f : %02.0f', floor(sum(exec_times) / (60.0 * 60.0)), floor(mod(sum(exec_times) / 60.0,60)), floor(mod(sum(exec_times),60)));
         fprintf('\nExtrapolated Finish Time: %4.0f : %02.0f : %02.0f', finish_hr, finish_min, finish_s);
         
-        [this_run_atm_conditions, this_run_prop_params, this_run_engine_params, this_run_rocket_params, varied_fields] = generate_range_of_values_parameters(atm_conditions, prop_params, engine_params, rocket_params, input_coefficients);
+        [this_run_atm_conditions, this_run_engine_params, this_run_rocket_params, this_run_recovery_params, varied_fields] = generate_range_of_values_parameters(atm_conditions, engine_params, rocket_params, recovery_params, input_coefficients);
         
-        [keyinfo, flightdata, forces, propinfo, INS_data, Roc, Eng, Prop, exec_time] = runsim(this_run_atm_conditions, this_run_prop_params, this_run_engine_params, this_run_rocket_params);
+        [keyinfo, flightdata, forces, Roc, Eng, exec_time] = runsim(this_run_atm_conditions, this_run_engine_params, this_run_rocket_params, this_run_recovery_params);
         
         exec_times(i) = exec_time * 1.125;
         
@@ -181,11 +187,8 @@ elseif (mode == 3)
         data.forces = forces;
         data.Roc = Roc;
         data.Eng = Eng;
-        data.Prop = Prop;
-        data.propinfo = propinfo;
-        data.INS_data = INS_data;
         fullsims{i} = data;
-        results(i,:) = [keyinfo.alt, keyinfo.mach, keyinfo.accel, keyinfo.Q, keyinfo.load, keyinfo.thrust, this_run_rocket_params.minert, (Prop.m)/(Prop.m+this_run_rocket_params.minert)];
+        results(i,:) = [keyinfo.alt, keyinfo.mach, keyinfo.accel, keyinfo.Q, keyinfo.load, keyinfo.thrust, this_run_rocket_params.minert, 0 / (0 + this_run_rocket_params.minert)];
         
     end
     
@@ -201,7 +204,7 @@ fprintf('\n\nDone Simulating!\n\n');
 % Connect to Excel
 Excel = actxserver('excel.application');
 % Get Workbook object
-fname = ['Output/sim ' strrep(datestr(now()), ':', '-') '.xlsx'];
+fname = ['Output/sim ' datestr(now(), 'yyyy-mm-dd-HH-MM') '.xlsx'];
 % https://www.mathworks.com/matlabcentral/answers/94822-are-there-any-examples-that-show-how-to-use-the-activex-automation-interface-to-connect-matlab-to-ex
 Workbooks = Excel.Workbooks;
 WB = invoke(Workbooks, 'Add');
@@ -221,7 +224,7 @@ if (mode == 1)
     
     % https://stackoverflow.com/questions/7636567/write-information-into-excel-after-each-loop
     WB.Sheets.Item(WS.Count).Activate();
-    sim_output_gen(Excel, flightdata, forces, keyinfo, Prop, Eng, Roc);
+    sim_output_gen(Excel, flightdata, forces, keyinfo, Eng, Roc);
     
 elseif (mode == 2 || mode == 3)
     if(mode == 2)
