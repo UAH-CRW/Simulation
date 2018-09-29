@@ -34,6 +34,7 @@ Roc.Cd = csvread('CdvsM_RASAERO.csv')'; % Courtesy Aaron Hunt
 %   - burntime: motor burn time (s)
 
 Eng.thrustcurve = getmotorbyname(Eng.name);
+Eng.thrustcurve.thrustcurve = Eng.thrustcurve.thrustcurve * (1 + Eng.impulse_adjust);
 
 % Wet Mass and More Derived Performance
 Roc.mwet = Eng.thrustcurve.minitial + Roc.minert; % Wet mass of rocket [kg]
@@ -67,6 +68,8 @@ tic % Record sim computation time
     Flight.max.thrust = max(forces(:,3))*0.2248; % Thrust force[lb]
     Flight.max.impulse = max(flightdata(:, 6)); % [N*s]
     Flight.max.Isp = Flight.max.impulse / ((max(forces(:, 1)) - min(forces(:, 1))) * g);
+    Flight.max.drift = max(abs(flightdata(:, 11))) * m2f;
+    Flight.max.groundhitvelocity = abs(flightdata(end, 8)) * m2f;
     temp = find(~flightdata(5:end, 3));
     max_vals = Flight.max;
 

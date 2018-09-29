@@ -19,9 +19,9 @@ Excel.Selection.Value = num2cell(forces);
 % Insert results
 begin_col = 19;
 [~, plusc] = insert_struct_into_excel(max, 'Maximums', Excel, [1, begin_col]);
-begin_col = begin_col + plusc + 2;
+begin_col = begin_col + plusc + 1;
 [~, plusc] = insert_struct_into_excel(Eng, 'Engine', Excel, [1, begin_col]);
-begin_col = begin_col + plusc + 2;
+begin_col = begin_col + plusc + 1;
 [~, plusc] = insert_struct_into_excel(Roc, 'Rocket', Excel, [1, begin_col]);
 ret = 0;
 end
