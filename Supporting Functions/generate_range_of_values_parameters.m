@@ -1,4 +1,4 @@
-function [ this_run_atm_conditions, this_run_prop_params, this_run_engine_params, this_run_rocket_params, this_run_avionics_params, variedtable] = generate_range_of_values_parameters(atm_conditions, prop_params, engine_params, rocket_params, avionics_params, parameter_coefficients)
+function [ this_run_atm_conditions, this_run_engine_params, this_run_rocket_params, this_run_recovery_params, variedtable] = generate_range_of_values_parameters(atm_conditions, engine_params, rocket_params, recovery_params, parameter_coefficients)
 %GENERATE_RANGE_OF_VALUE_PARAMETERS Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -25,9 +25,9 @@ end
 
 fields = fieldnames(engine_params);
 for i = 1:numel(fields)
-    if ( length(engine_params.(fields{i})) == 1)
+    if (length(engine_params.(fields{i})) == 1 || ischar(engine_params.(fields{i})))
         this_run_engine_params.(fields{i}) = engine_params.(fields{i});
-    elseif ( length(engine_params.(fields{i})) == 3)
+    elseif (length(engine_params.(fields{i})) == 3 && ~ischar(engine_params.(fields{i})))
         this_run_engine_params.(fields{i}) = interp1([0,1],[engine_params.(fields{i})(1),engine_params.(fields{i})(3)],parameter_coefficients(parameter_index));
         variedtable = [variedtable; [{fields{i}}, this_run_engine_params.(fields{i})]];
         
@@ -45,6 +45,18 @@ for i = 1:numel(fields)
         variedtable = [variedtable; [{fields{i}}, this_run_rocket_params.(fields{i})]];
         
         parameter_index = parameter_index+1;
+    end
+end
+
+fields = fieldnames(recovery_params);
+for i = 1:numel(fields)
+    if ( length(recovery_params.(fields{i})) == 1)
+        this_run_recovery_params.(fields{i}) = recovery_params.(fields{i});
+    elseif ( length(rocket_params.(fields{i})) == 3)
+        this_run_recovery_params.(fields{i}) = interp1([0,1],[recovery_params.(fields{i})(1),recovery_params.(fields{i})(3)],parameter_coefficients(parameter_index));
+        variedtable = [variedtable; [{fields{i}}, this_run_recovery_params.(fields{i})]];
+        
+        parameter_index = parameter_index + 1;
     end
 end
 

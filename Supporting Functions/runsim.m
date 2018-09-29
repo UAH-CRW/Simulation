@@ -51,7 +51,7 @@ Recovery.apogeetime = 0;
 options = simset('SrcWorkspace','current');
 
 if ~isfield(Conditions, 'tend')
-    tend = 90; % End time of sim in seconds
+    tend = 300; % End time of sim in seconds
 else
     tend = Conditions.tend;
 end
