@@ -23,6 +23,12 @@ for i = 1:height(T)
                 table2cell(T(i, param_col + 3))])';
             valtype = ParameterType.MonteCarlo;
         end
+        
+        for n = 1:length(value)
+            if any(isnan(value(n)))
+                error('Error retrieving parameter "%s". Encountered empty cell in specified range', param_name);
+            end
+        end
     end
 end
 end
