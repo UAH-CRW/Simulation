@@ -23,7 +23,7 @@ lb2kg = 0.453592; % convert lbs to kg
 lb2N = 4.448; % convert lbs to N
 in2m = 0.0254; % convert in to m
 
-Roc.Cd = csvread('CdvsM_RASAERO.csv')'; % Courtesy Aaron Hunt
+Roc.Cd = csvread('CdvsM_RASAERO.csv')' * Roc.Cd_adjust;
 
 %%Read in thrust curve
 %Must populate Eng.thrustcurve with properties:

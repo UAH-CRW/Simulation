@@ -47,6 +47,8 @@ end
 
 engine_params.impulse_adjust = param_from_table(rocketoptions, 'Motor impulse adjustment', 1);
 
+rocket_params.Cd_adjust = param_from_table(rocketoptions, 'Rocket Cd adjustment', 1);
+
 %% Recovery system options
 recovery_params = [];
 recoveryoptions = readtable('simconfig.xlsm', 'Sheet', 'Recovery');
