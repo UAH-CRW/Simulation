@@ -35,8 +35,8 @@ rocket_params = [];
 engine_params = [];
 rocketoptions = readtable('simconfig.xlsm', 'Sheet', 'Vehicle');
 rocket_params.minert = param_from_table(rocketoptions, 'Total inert mass', 1);
-
 rocket_params.d = param_from_table(rocketoptions, 'Largest circular diameter', 1);
+rocket_params.Cd_adjust = param_from_table(rocketoptions, 'Rocket Cd adjustment', 1);
 
 for i = 1:height(rocketoptions)
     if strcmp(table2cell(rocketoptions(i, 1)), 'Motor')
@@ -46,8 +46,6 @@ for i = 1:height(rocketoptions)
 end
 
 engine_params.impulse_adjust = param_from_table(rocketoptions, 'Motor impulse adjustment', 1);
-
-rocket_params.Cd_adjust = param_from_table(rocketoptions, 'Rocket Cd adjustment', 1);
 
 %% Recovery system options
 recovery_params = [];
